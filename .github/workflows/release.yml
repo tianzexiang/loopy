@@ -1,0 +1,119 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-mcp-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build MCP server bundle
+        working-directory: mcp-server
+        run: |
+          npm ci
+          npm run build
+          npm run bundle
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-server-bundle
+          path: mcp-server/dist/bundle.mjs
+
+  build-tauri:
+    needs: build-mcp-server
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundle_ext: .exe
+          # Uncomment to add more platforms:
+          # - platform: macos-latest
+          #   target: aarch64-apple-darwin
+          #   bundle_ext: .dmg
+          # - platform: macos-latest
+          #   target: x86_64-apple-darwin
+          #   bundle_ext: .dmg
+          # - platform: ubuntu-22.04
+          #   target: x86_64-unknown-linux-gnu
+          #   bundle_ext: .deb
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ''
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseBody: 'See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.'
+          releaseDraft: true
+          prerelease: false
+          args: --target ${{ matrix.target }}
+
+  package-release:
+    needs: [build-mcp-server, build-tauri]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: mcp-server-bundle
+          path: release-staging/
+
+      - name: Package release assets
+        run: |
+          cp setup.mjs release-staging/
+          cp README.md release-staging/
+          cp pua-rules.md release-staging/
+
+      - name: Upload supplementary assets to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          for file in release-staging/*; do
+            gh release upload "$TAG" "$file" --clobber || true
+          done
