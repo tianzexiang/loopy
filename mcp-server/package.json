@@ -1,0 +1,24 @@
+{
+  "name": "loopy-server",
+  "version": "0.1.0",
+  "description": "MCP server for Loopy — bridges Cursor IDE and the feedback GUI via stdio/WebSocket",
+  "type": "module",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --format=esm --charset=utf8 --outfile=dist/bundle.mjs --external:bufferutil --external:utf-8-validate --banner:js=\"import{createRequire}from'module';const require=createRequire(import.meta.url);\"",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "ws": "^8.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.0.0",
+    "esbuild": "^0.27.4",
+    "tsx": "^4.0.0",
+    "typescript": "~5.9.3"
+  }
+}
