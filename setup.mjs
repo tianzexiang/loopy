@@ -73,6 +73,8 @@ console.log('')
 console.log('   等待超时: 30 分钟')
 const autoMs = currentEnv.FEEDBACK_AUTO_REPLY_TIMEOUT_MS ?? '300000'
 const hasCustomText = !!currentEnv.FEEDBACK_AUTO_REPLY_TEXT
-console.log(`   自动回复: ${autoMs === '0' ? '已禁用' : `${Number(autoMs) / 60000} 分钟（${hasCustomText ? '自定义文本' : 'PUA 激励'}）`}`)
+const hasPua = currentEnv.FEEDBACK_USE_PUA === 'true'
+const modeLabel = hasCustomText ? '自定义文本' : hasPua ? 'PUA 激励' : '继续 + retry'
+console.log(`   自动回复: ${autoMs === '0' ? '已禁用' : `${Number(autoMs) / 60000} 分钟（${modeLabel}）`}`)
 console.log('')
 console.log('👉 请在 Cursor 设置 → MCP 中重启 loopy 服务。')

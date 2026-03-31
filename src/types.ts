@@ -19,6 +19,7 @@ export interface FeedbackResponse {
   text: string
   images: ImageAttachment[]
   timestamp: number
+  isAutoReply?: boolean
 }
 
 export interface ImageAttachment {

@@ -41,16 +41,17 @@ Subagents launched via the Task tool should skip this rule.
 3. 输入文字反馈或粘贴截图，按回车发送
 4. AI 收到反馈后继续执行
 
-### 自动回复（默认开启 PUA 激励）
+### 自动回复
 
-5 分钟无人回复时，自动发送 `pua-rules.md` 中的内容作为反馈。默认内置 [PUA 万能激励引擎](https://github.com/tanweai/pua)：
+5 分钟无人回复时，自动发送"继续"并附带 retry 指令维持反馈循环。AI 会继续工作并再次调用 loopy。
+
+**启用 PUA 激励模式**：在 `mcp.json` 的 `env` 中添加 `"FEEDBACK_USE_PUA": "true"`，自动回复将使用 `pua-rules.md` 中的 [PUA 万能激励引擎](https://github.com/tanweai/pua) 内容：
 
 - AI 收到后被迫采用：三条铁律、压力升级（L1→L4）、7 项检查清单、主动出击模式
-- 相当于你 5 分钟后自动"PUA"了 AI 一顿，让它更努力地继续工作
 
 **自定义回复内容**：
-- 编辑 `pua-rules.md` 文件，写入任何你想自动回复的内容
-- 或者在 `mcp.json` 中设置 `FEEDBACK_AUTO_REPLY_TEXT` 环境变量（优先级高于文件）
+- 在 `mcp.json` 中设置 `FEEDBACK_AUTO_REPLY_TEXT` 环境变量（优先级最高）
+- 或开启 PUA 后编辑 `pua-rules.md` 文件
 
 ### 多 Agent 支持
 
@@ -63,22 +64,24 @@ Subagents launched via the Task tool should skip this rule.
 | 环境变量 | 默认值 | 说明 |
 |---|---|---|
 | `FEEDBACK_MAX_WAIT_MS` | `1800000`（30 分钟） | 最大等待时间，需与外层 `timeout` 字段保持一致 |
-| `FEEDBACK_AUTO_REPLY_TIMEOUT_MS` | `300000`（5 分钟）* | 无人回复时自动回复的超时时间。设 `0` 禁用 |
-| `FEEDBACK_AUTO_REPLY_TEXT` | — | 自定义自动回复文本。设置后优先于 `pua-rules.md` 文件 |
+| `FEEDBACK_AUTO_REPLY_TIMEOUT_MS` | `300000`（5 分钟）* | 无人回复时自动回复的超时时间（毫秒）。设 `0` 禁用 |
+| `FEEDBACK_AUTO_REPLY_TEXT` | — | 自定义自动回复文本（优先级最高） |
+| `FEEDBACK_USE_PUA` | — | 设为 `true` 启用 PUA 激励模式（使用 `pua-rules.md` 内容） |
 | `FEEDBACK_WS_PORT` | `9399` | 内部通信端口，一般无需修改 |
 
-\* `setup.mjs` 会自动设为 `300000`。未经 setup 配置时代码默认为 `0`（禁用）。
+\* `setup.mjs` 自动设为 `300000`。未经 setup 时代码默认为 `0`（禁用）。
 
 ### 常用配置
 
-**默认 PUA 模式**（推荐，无需额外配置）：
+**默认模式**（自动回复"继续" + retry 指令，无需额外配置）
+
+**PUA 激励模式**：
 ```json
-"FEEDBACK_AUTO_REPLY_TIMEOUT_MS": "300000"
+"FEEDBACK_USE_PUA": "true"
 ```
 
 **自定义回复文本**：
 ```json
-"FEEDBACK_AUTO_REPLY_TIMEOUT_MS": "300000",
 "FEEDBACK_AUTO_REPLY_TEXT": "做得好，继续保持"
 ```
 
@@ -96,4 +99,10 @@ pnpm install
 cd mcp-server && npm install && cd ..
 pnpm build:all
 pnpm setup
+```
+
+发版（自动更新 CHANGELOG）：
+
+```bash
+node scripts/release.mjs 0.3.0
 ```

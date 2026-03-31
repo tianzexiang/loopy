@@ -173,9 +173,10 @@ export const useSessionStore = defineStore('sessions', () => {
       sendResponse({
         requestId: request.id,
         type: 'feedback',
-        text: request.autoReplyText || '继续',
+        text: request.autoReplyText ?? '',
         images: [],
         timestamp: Date.now(),
+        isAutoReply: true,
       })
     }, request.autoReplyTimeout))
   }
@@ -198,7 +199,7 @@ export const useSessionStore = defineStore('sessions', () => {
       id: generateId(),
       sessionId: session.id,
       role: 'user',
-      content: response.text,
+      content: response.text || (response.isAutoReply ? '[自动回复]' : ''),
       images: response.images,
       responseType: response.type,
       timestamp: response.timestamp,

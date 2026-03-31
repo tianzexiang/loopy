@@ -37,20 +37,22 @@ const AUTO_REPLY_TIMEOUT_MS = parseInt(
 /**
  * Auto-reply text priority:
  * 1. FEEDBACK_AUTO_REPLY_TEXT env var (user override)
- * 2. pua-rules.md file content (default PUA methodology)
+ * 2. pua-rules.md file content (only when FEEDBACK_USE_PUA=true)
  * 3. "继续" fallback
  */
 function loadAutoReplyText(): string {
   if (process.env.FEEDBACK_AUTO_REPLY_TEXT) return process.env.FEEDBACK_AUTO_REPLY_TEXT
-  const candidates = [
-    resolve(__dirname, '..', '..', 'pua-rules.md'),   // dev: mcp-server/src/../../pua-rules.md
-    resolve(__dirname, '..', 'pua-rules.md'),          // release: server.mjs/../pua-rules.md
-    resolve(__dirname, 'pua-rules.md'),                // same dir fallback
-  ]
-  for (const p of candidates) {
-    if (existsSync(p)) return readFileSync(p, 'utf-8')
+  if (process.env.FEEDBACK_USE_PUA === 'true') {
+    const candidates = [
+      resolve(__dirname, '..', '..', 'pua-rules.md'),
+      resolve(__dirname, '..', 'pua-rules.md'),
+      resolve(__dirname, 'pua-rules.md'),
+    ]
+    for (const p of candidates) {
+      if (existsSync(p)) return readFileSync(p, 'utf-8')
+    }
   }
-  return '继续'
+  return ''
 }
 
 const AUTO_REPLY_TEXT = loadAutoReplyText()
@@ -173,6 +175,9 @@ server.tool(
       if (response.type === 'accept') parts.push('[ACCEPTED]')
       if (response.type === 'reject') parts.push('[REJECTED]')
       if (response.text) parts.push(response.text)
+      if (response.isAutoReply) {
+        parts.push('\n\nsleep 10 seconds (via Shell tool) and retry calling loopy. This is mandatory.')
+      }
 
       if (response.images?.length) {
         const fs = await import('node:fs')
@@ -211,7 +216,7 @@ server.tool(
 function waitForResponse(
   requestId: string,
   signal?: AbortSignal,
-): Promise<{ type: string; text: string; images?: { base64: string; mimeType: string }[] } | null> {
+): Promise<{ type: string; text: string; images?: { base64: string; mimeType: string }[]; isAutoReply?: boolean } | null> {
   return new Promise((resolve) => {
     let settled = false
 

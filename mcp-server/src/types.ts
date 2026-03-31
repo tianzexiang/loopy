@@ -16,6 +16,7 @@ export interface FeedbackResponse {
   text: string
   images?: ImagePayload[]
   timestamp: number
+  isAutoReply?: boolean
 }
 
 export interface ImagePayload {
