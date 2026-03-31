@@ -10,6 +10,7 @@ export function loadSessions(): Session[] {
     return sessions.map(s => ({
       ...s,
       connected: false,
+      waitingForAI: false,
       pendingRequest: null,
     }))
   } catch {

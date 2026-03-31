@@ -47,6 +47,7 @@ export interface Session {
   /** Same as MCP INSTANCE_ID when this tab is from that process (incl. per-request tabs) */
   mcpConnectionId?: string
   connected: boolean
+  waitingForAI: boolean
   createdAt: number
   lastActiveAt: number
   messages: ChatMessage[]

@@ -137,26 +137,41 @@ function sessionTitle(): string {
 
 function dotStyle(session: typeof store.visibleSessions[number]) {
   const isActive = store.activeSessionId === session.id
-  const size = isActive ? '9px' : '5px'
+  const size = isActive ? '7px' : '5px'
 
   if (!session.connected) {
-    return { width: size, height: size, background: '#555', opacity: '0.25' }
+    return { width: size, height: size, background: '#555', opacity: '0.25', transition: 'all 0.4s ease' }
   }
   if (session.pendingRequest) {
     return {
       width: size, height: size,
       background: session.color,
-      boxShadow: isActive ? `0 0 8px ${session.color}90` : 'none',
+      boxShadow: isActive ? `0 0 6px ${session.color}80` : 'none',
       opacity: isActive ? '1' : '0.65',
       animation: 'breathe 2s ease-in-out infinite',
+      transition: 'all 0.4s ease',
+    }
+  }
+  if (session.waitingForAI) {
+    return {
+      width: size, height: size,
+      background: session.color,
+      boxShadow: isActive ? `0 0 4px ${session.color}60` : 'none',
+      opacity: isActive ? '0.9' : '0.5',
+      animation: 'spin 1.2s linear infinite',
+      borderRadius: '50%',
+      border: `1.5px solid transparent`,
+      borderTopColor: session.color,
+      transition: 'all 0.4s ease',
     }
   }
   return {
     width: size, height: size,
     background: session.color,
-    boxShadow: isActive ? `0 0 8px ${session.color}90` : 'none',
-    opacity: isActive ? '1' : '0.45',
-    animation: isActive ? 'pulse 1.5s ease-in-out infinite' : 'none',
+    boxShadow: isActive ? `0 0 4px ${session.color}60` : 'none',
+    opacity: isActive ? '0.8' : '0.4',
+    animation: isActive ? 'pulse 2s ease-in-out infinite' : 'none',
+    transition: 'all 0.4s ease',
   }
 }
 </script>

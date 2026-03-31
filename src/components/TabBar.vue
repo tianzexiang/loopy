@@ -66,14 +66,17 @@ function tabLabel(s: Session): string {
       >
         <div
           class="w-2 h-2 rounded-full shrink-0 relative"
-          :style="{ background: session.connected ? session.color : '#555' }"
-        >
-          <div
-            v-if="session.pendingRequest"
-            class="absolute inset-0 rounded-full"
-            :style="{ background: session.color, animation: 'breathe 2s ease-in-out infinite' }"
-          />
-        </div>
+          :style="{
+            background: session.waitingForAI ? 'transparent' : (session.connected ? session.color : '#555'),
+            border: session.waitingForAI ? `1.5px solid transparent` : 'none',
+            borderTopColor: session.waitingForAI ? session.color : 'transparent',
+            animation: session.waitingForAI
+              ? 'spin 1.2s linear infinite'
+              : (session.pendingRequest ? 'breathe 2s ease-in-out infinite' : 'none'),
+            transition: 'all 0.4s ease',
+          }"
+        />
+
         <span class="truncate min-w-0 flex-1">{{ tabLabel(session) }}</span>
         <span
           v-if="!session.connected"

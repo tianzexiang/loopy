@@ -126,6 +126,7 @@ export const useSessionStore = defineStore('sessions', () => {
         projectDirectory: request.projectDirectory,
         mcpConnectionId: request.mcpConnectionId,
         connected: true,
+        waitingForAI: false,
         createdAt: Date.now(),
         lastActiveAt: Date.now(),
         messages: [],
@@ -136,6 +137,7 @@ export const useSessionStore = defineStore('sessions', () => {
 
     session.pendingRequest = request
     session.connected = true
+    session.waitingForAI = false
     session.lastActiveAt = Date.now()
     session.label = summarizeTitle(request.summary)
     if (request.mcpConnectionId) {
@@ -202,6 +204,7 @@ export const useSessionStore = defineStore('sessions', () => {
       timestamp: response.timestamp,
     })
     session.pendingRequest = null
+    session.waitingForAI = true
     session.lastActiveAt = Date.now()
 
     await invoke('send_ws_message', {
