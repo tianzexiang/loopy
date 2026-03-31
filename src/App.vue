@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref, computed, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
 import { useSessionStore } from './stores/sessions'
+import { useUsageStore } from './stores/usage'
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window'
 import { getLogicalWindowState, getExpandDirection, animateWindowResize } from './composables/useWindowLayout'
 import TabBar from './components/TabBar.vue'
 import ChatHistory from './components/ChatHistory.vue'
+import UsageDrawer from './components/UsageDrawer.vue'
 import InputToolbar from './components/InputToolbar.vue'
 
 const store = useSessionStore()
+const usageStore = useUsageStore()
 const expanded = ref(false)
+const usageDrawerOpen = ref(false)
 const animating = ref(false)
 const collapsedEl = ref<HTMLDivElement>()
 
@@ -26,10 +30,19 @@ function measureCollapsedHeight(): number {
 
 onMounted(async () => {
   store.setupEventListeners()
+  usageStore.init()
   await nextTick()
   const h = measureCollapsedHeight()
   await getCurrentWindow().setSize(new LogicalSize(WIN_W, h))
 })
+
+onUnmounted(() => {
+  usageStore.cleanup()
+})
+
+function toggleUsageDrawer() {
+  usageDrawerOpen.value = !usageDrawerOpen.value
+}
 
 async function toggleExpand() {
   if (animating.value) return
@@ -118,7 +131,8 @@ function cycleSession() {
           boxShadow: `0 0 0 1px ${sessionColor}50, 0 0 10px ${sessionColor}25, 0 0 25px ${sessionColor}10`,
         }"
       >
-        <TabBar @drag-start="onPanelDragStart" />
+        <TabBar :usage-open="usageDrawerOpen" @drag-start="onPanelDragStart" @toggle-usage="toggleUsageDrawer" />
+        <UsageDrawer v-if="usageDrawerOpen" />
         <ChatHistory class="flex-1 min-h-0" />
       </div>
     </div>

@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import type { Session, FeedbackRequest, FeedbackResponse, ConnectionStatus } from '../types'
 import { loadSessions, saveSessions } from '../utils/storage'
+import { useUsageStore } from './usage'
 
 const TAB_COLORS = [
   '#007acc', '#4ec9b0', '#ce9178', '#c586c0',
@@ -207,6 +208,12 @@ export const useSessionStore = defineStore('sessions', () => {
       message: JSON.stringify({ type: 'feedback_response', payload: response }),
       target_instance: session.mcpConnectionId ?? null,
     })
+
+    // Refresh usage after each interaction (a request was consumed)
+    try {
+      const usageStore = useUsageStore()
+      usageStore.fetchUsage()
+    } catch { /* usage store not ready yet */ }
   }
 
   async function removeSession(sessionId: string) {

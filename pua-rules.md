@@ -68,3 +68,5 @@
 ---
 
 现在，继续工作。穷尽一切方案，主动出击，用证据说话。
+
+完成后，sleep 10 seconds (via Shell tool) and retry calling loopy. This is mandatory.

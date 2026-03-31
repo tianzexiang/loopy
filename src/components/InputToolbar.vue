@@ -5,6 +5,7 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
 import type { FeedbackResponse, ImageAttachment } from '../types'
 import Lightbox from './Lightbox.vue'
+import UsageBadge from './UsageBadge.vue'
 
 defineProps<{
   sessionColor: string
@@ -244,6 +245,7 @@ function dotStyle(session: typeof store.visibleSessions[number]) {
           <span v-else :style="hasPending ? { color: sessionColor } : {}">{{ sessionTitle() }}</span>
           <span v-if="hasPending && pendingCount > 1" class="text-[#e5c07b]">{{ pendingCount }} pending</span>
         </div>
+        <UsageBadge v-if="!historyOpen" class="pointer-events-auto" />
         <div class="flex items-center gap-0.5 pointer-events-auto">
           <button class="w-6 h-6 rounded flex items-center justify-center text-[#555] hover:text-[#ccc] hover:bg-white/5 transition-colors cursor-pointer" title="Attach image" @mousedown.stop @click="pickImage()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>

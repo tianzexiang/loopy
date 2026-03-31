@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useSessionStore } from '../stores/sessions'
+import UsageBadge from './UsageBadge.vue'
 import type { Session } from '../types'
+
+defineProps<{
+  usageOpen?: boolean
+}>()
 
 const emit = defineEmits<{
   dragStart: [e: MouseEvent]
+  toggleUsage: []
 }>()
 
 const store = useSessionStore()
@@ -82,5 +88,25 @@ function tabLabel(s: Session): string {
       </button>
     </template>
     <span v-else />
+
+    <!-- Usage indicator (right side) -->
+    <div class="ml-auto shrink-0 flex items-center gap-1 pl-2">
+      <UsageBadge />
+      <button
+        class="w-5 h-5 rounded flex items-center justify-center text-[#666] hover:text-[#ccc] hover:bg-white/5 transition-colors cursor-pointer"
+        title="Toggle usage details"
+        @mousedown.stop
+        @click="emit('toggleUsage')"
+      >
+        <svg
+          width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round"
+          class="transition-transform duration-200"
+          :style="{ transform: usageOpen ? 'rotate(180deg)' : '' }"
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+    </div>
   </div>
 </template>

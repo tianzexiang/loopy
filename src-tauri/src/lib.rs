@@ -1,3 +1,4 @@
+mod cursor_usage;
 mod ws_server;
 
 use tauri::Manager;
@@ -30,7 +31,11 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(ws_server::WsState::new())
-        .invoke_handler(tauri::generate_handler![send_ws_message])
+        .invoke_handler(tauri::generate_handler![
+            send_ws_message,
+            cursor_usage::get_cursor_usage,
+            cursor_usage::refresh_cursor_usage,
+        ])
         .setup(move |app| {
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.set_shadow(false);

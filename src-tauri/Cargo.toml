@@ -1,6 +1,6 @@
 [package]
 name = "loopy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Loopy - AI feedback loop with PUA motivation engine"
 authors = ["you"]
 edition = "2021"
@@ -23,3 +23,5 @@ tokio = { version = "1", features = ["rt", "net", "sync", "macros"] }
 tokio-tungstenite = "0.26"
 futures-util = "0.3"
 socket2 = { version = "0.5", features = ["all"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
