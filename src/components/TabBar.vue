@@ -65,10 +65,12 @@ function tabLabel(s: Session): string {
         @click="store.activeSessionId = session.id"
       >
         <div
-          class="w-2 h-2 rounded-full shrink-0 relative"
+          class="rounded-full shrink-0 relative"
           :style="{
+            width: session.waitingForAI ? '10px' : '8px',
+            height: session.waitingForAI ? '10px' : '8px',
             background: session.waitingForAI ? 'transparent' : (session.connected ? session.color : '#555'),
-            border: session.waitingForAI ? `1.5px solid transparent` : 'none',
+            border: session.waitingForAI ? `2px solid ${session.color}25` : 'none',
             borderTopColor: session.waitingForAI ? session.color : 'transparent',
             animation: session.waitingForAI
               ? 'spin 1.2s linear infinite'

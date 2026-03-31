@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useSessionStore } from '../stores/sessions'
 import { open } from '@tauri-apps/plugin-dialog'
 import { readFile } from '@tauri-apps/plugin-fs'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import type { FeedbackResponse, ImageAttachment } from '../types'
 import Lightbox from './Lightbox.vue'
 import UsageBadge from './UsageBadge.vue'
@@ -26,6 +27,7 @@ const inputText = ref('')
 const images = ref<ImageAttachment[]>([])
 const textareaRef = ref<HTMLTextAreaElement>()
 const lightboxSrc = ref<string | null>(null)
+const draggingOver = ref(false)
 
 const hasPending = computed(() => !!store.activeSession?.pendingRequest)
 const isConnected = computed(() => store.activeSession?.connected ?? false)
@@ -94,29 +96,53 @@ async function handlePaste(e: ClipboardEvent) {
 async function pickImage() {
   const result = await open({
     multiple: true,
-    filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'] }],
+    filters: [{ name: 'Images', extensions: [...IMAGE_EXTS] }],
   })
   if (!result) return
   const paths = Array.isArray(result) ? result : [result]
   for (const filePath of paths) {
-    const data = await readFile(filePath)
-    const base64 = btoa(String.fromCharCode(...data))
-    const ext = filePath.split('.').pop()?.toLowerCase() ?? 'png'
-    const mimeMap: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' }
-    const mime = mimeMap[ext] ?? 'image/png'
-    images.value.push({
-      id: genId(),
-      name: filePath.split(/[\\/]/).pop() ?? 'image',
-      base64,
-      mimeType: mime,
-      previewUrl: `data:${mime};base64,${base64}`,
-    })
+    await addImageFromPath(filePath)
   }
 }
 
 function removeImage(id: string) {
   images.value = images.value.filter(i => i.id !== id)
 }
+
+const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'])
+const mimeMap: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' }
+
+async function addImageFromPath(filePath: string) {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? ''
+  if (!IMAGE_EXTS.has(ext)) return
+  const data = await readFile(filePath)
+  const base64 = btoa(String.fromCharCode(...data))
+  const mime = mimeMap[ext] ?? 'image/png'
+  images.value.push({
+    id: genId(),
+    name: filePath.split(/[\\/]/).pop() ?? 'image',
+    base64,
+    mimeType: mime,
+    previewUrl: `data:${mime};base64,${base64}`,
+  })
+}
+
+let unlistenDragDrop: (() => void) | null = null
+onMounted(async () => {
+  unlistenDragDrop = await getCurrentWindow().onDragDropEvent(async (event) => {
+    if (event.payload.type === 'over' || event.payload.type === 'enter') {
+      draggingOver.value = true
+    } else if (event.payload.type === 'leave') {
+      draggingOver.value = false
+    } else if (event.payload.type === 'drop') {
+      draggingOver.value = false
+      for (const path of event.payload.paths) {
+        await addImageFromPath(path)
+      }
+    }
+  })
+})
+onUnmounted(() => { unlistenDragDrop?.() })
 
 watch(() => images.value.length, async () => {
   await nextTick()
@@ -153,14 +179,15 @@ function dotStyle(session: typeof store.visibleSessions[number]) {
     }
   }
   if (session.waitingForAI) {
+    const spinSize = isActive ? '10px' : '8px'
     return {
-      width: size, height: size,
-      background: session.color,
-      boxShadow: isActive ? `0 0 4px ${session.color}60` : 'none',
-      opacity: isActive ? '0.9' : '0.5',
-      animation: 'spin 1.2s linear infinite',
+      width: spinSize, height: spinSize,
+      background: 'transparent',
+      boxShadow: 'none',
+      opacity: '1',
+      animation: 'spin 1s linear infinite',
       borderRadius: '50%',
-      border: `1.5px solid transparent`,
+      border: `2px solid ${session.color}25`,
       borderTopColor: session.color,
       transition: 'all 0.4s ease',
     }
@@ -192,12 +219,12 @@ function dotStyle(session: typeof store.visibleSessions[number]) {
 
     <!-- Input box with theme-colored border -->
     <div
-      class="flex-1 min-w-0 overflow-hidden flex flex-col h-full"
+      class="flex-1 min-w-0 overflow-hidden flex flex-col h-full transition-shadow duration-200"
       :class="historyOpen ? 'rounded-b-xl' : 'rounded-xl'"
       :style="{
-        background: '#1e1f22',
-        boxShadow: historyOpen
-          ? `0 0 0 1px ${sessionColor}50, 0 0 10px ${sessionColor}25, 0 0 25px ${sessionColor}10`
+        background: draggingOver ? '#252730' : '#1e1f22',
+        boxShadow: draggingOver
+          ? `0 0 0 2px ${sessionColor}, 0 0 16px ${sessionColor}40`
           : `0 0 0 1px ${sessionColor}50, 0 0 10px ${sessionColor}25, 0 0 25px ${sessionColor}10`,
       }"
     >
