@@ -45,9 +45,10 @@ if (version) {
     const date = new Date().toISOString().slice(0, 10)
     const section = `## v${version} (${date})\n\n${log}\n`
     const existing = existsSync(changelogPath) ? readFileSync(changelogPath, 'utf-8') : ''
-    const header = '# Changelog\n\n'
-    const body = existing.startsWith(header) ? existing.slice(header.length) : existing
-    writeFileSync(changelogPath, `${header}${section}\n${body}`, 'utf-8')
+    const header = '# Changelog'
+    const headerIdx = existing.indexOf(header)
+    const afterHeader = headerIdx >= 0 ? existing.slice(headerIdx + header.length).replace(/^\r?\n\r?\n/, '') : existing
+    writeFileSync(changelogPath, `# Changelog\n\n${section}\n${afterHeader}`, 'utf-8')
     console.log(`   Added ${log.split('\n').length} entries to CHANGELOG.md\n`)
   } else {
     console.log('   No new commits since last tag.\n')
